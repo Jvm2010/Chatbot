@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot Suporte</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <script>
+      function toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+      }
+    </script>
+    <style>
+      .dark body {
+        background-color: #1a202c;
+        color: white;
+      }
+      .dark input, .dark button, .dark textarea {
+        background-color: #2d3748;
+        color: white;
+      }
+    </style>
+  </head>
+  <body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="flex justify-end w-full mb-4">
+      <button onclick="toggleTheme()" class="px-4 py-2 bg-gray-800 text-white rounded">Modo Claro/Escuro</button>
+    </div>
+    <h1 class="text-3xl font-bold mb-6">Chatbot Suporte</h1>
+
+    <form id="startForm" class="flex flex-col space-y-4 w-full max-w-md">
+      <input class="border p-2 rounded" type="text" placeholder="Seu Nome" id="nome" required />
+      <input class="border p-2 rounded" type="text" placeholder="Sua Filial" id="filial" required />
+      <input class="border p-2 rounded" type="text" placeholder="Seu Setor" id="setor" required />
+      <button class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600" type="submit">Iniciar Chat</button>
+    </form>
+
+    <div id="chatContainer" class="hidden flex flex-col w-full max-w-md space-y-4">
+      <div id="chatMessages" class="flex flex-col space-y-2 h-96 overflow-y-scroll p-2 border rounded bg-white dark:bg-gray-800"></div>
+      <div class="flex">
+        <input id="userMessage" class="flex-1 p-2 border rounded-l" type="text" placeholder="Digite sua mensagem..." />
+        <button onclick="sendMessage()" class="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600">Enviar</button>
+      </div>
+      <button onclick="endChat()" class="mt-2 bg-red-500 text-white p-2 rounded hover:bg-red-600">Finalizar Atendimento</button>
+    </div>
+
+    <script>
+      const webhookUrl = "https://kochti.app.n8n.cloud/webhook-test/chat-atendimento";
+
+      let userInfo = {};
+
+      document.getElementById('startForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        userInfo = {
+          nome: document.getElementById('nome').value,
+          filial: document.getElementById('filial').value,
+          setor: document.getElementById('setor').value,
+        };
+        document.getElementById('startForm').classList.add('hidden');
+        document.getElementById('chatContainer').classList.remove('hidden');
+        addMessage('Olá ' + userInfo.nome + '! Como posso ajudar?', 'bot');
+      });
+
+      function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = sender === 'user' ? 'text-right' : 'text-left';
+        messageDiv.innerHTML = `<span class="inline-block px-4 py-2 rounded ${sender === 'user' ? 'bg-blue-200' : 'bg-gray-300 dark:bg-gray-700'}">${text}</span>`;
+        document.getElementById('chatMessages').appendChild(messageDiv);
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById('userMessage');
+        const message = input.value.trim();
+        if (!message) return;
+        addMessage(message, 'user');
+        input.value = '';
+
+        const payload = {
+          userInfo,
+          message
+        };
+
+        try {
+          const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          addMessage(data.reply || 'Não entendi, você pode reformular?', 'bot');
+        } catch (error) {
+          addMessage('Erro ao conectar com o servidor.', 'bot');
+        }
+      }
+
+      function endChat() {
+        if (confirm('Tem certeza que deseja finalizar o atendimento?')) {
+          document.getElementById('chatMessages').innerHTML = '';
+          document.getElementById('chatContainer').classList.add('hidden');
+          document.getElementById('startForm').classList.remove('hidden');
+        }
+      }
+    </script>
+  </body>
+</html>

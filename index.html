@@ -1,107 +1,897 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chatbot Suporte</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-    <script>
-      function toggleTheme() {
-        document.documentElement.classList.toggle('dark');
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Chat de Atendimento Koch Supermercados">
+  <title>Atendimento Koch Supermercados</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #E31918;
+      --primary-dark: #C01010;
+      --background-color: #F8F8F8;
+      --light: #fff;
+      --border-color: #E0E0E0;
+      --text-color: #333;
+      --error-color: #ff4444;
+      --success-color: #4CAF50;
+      --recording-color: #f44336;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--background-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+      color: var(--text-color);
+      line-height: 1.6;
+      background-image: url('https://assets.isu.pub/document-structure/240704163828-6e68baf933c34b3e20705fa24f2cf2d0/v1/9777f9ae3a8b98435f18649631064515.jpeg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .chat-wrapper {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 90vh;
+      max-height: 800px;
+      backdrop-filter: blur(2px);
+    }
+
+    .chat-header {
+      background: var(--primary-color);
+      color: var(--light);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .chat-header img {
+      height: 40px;
+      margin-right: 10px;
+      object-fit: contain;
+    }
+
+    .chat-header h2 {
+      margin: 0;
+      font-size: 18px;
+      flex: 1;
+    }
+
+    .status {
+      position: absolute;
+      right: 20px;
+      background: var(--success-color);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status::before {
+      content: "";
+      display: block;
+      width: 8px;
+      height: 8px;
+      background-color: var(--light);
+      border-radius: 50%;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: transparent;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 80%;
+      margin-bottom: 15px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      position: relative;
+      animation: fadeIn 0.3s ease;
+      backdrop-filter: blur(2px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.sent {
+      background: rgba(227, 25, 24, 0.9);
+      color: var(--light);
+      margin-left: auto;
+      border-bottom-right-radius: 0;
+    }
+
+    .message.received {
+      background: rgba(248, 248, 248, 0.9);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 0;
+    }
+
+    .message-time {
+      display: block;
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 5px;
+      text-align: right;
+    }
+
+    .chat-input {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-top: 1px solid var(--border-color);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(2px);
+    }
+
+    .chat-input textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 25px;
+      border: 1px solid var(--border-color);
+      padding: 12px 18px;
+      font-size: 15px;
+      outline: none;
+      min-height: 45px;
+      max-height: 120px;
+      transition: border-color 0.3s;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .chat-input textarea:focus {
+      border-color: var(--primary-color);
+    }
+
+    .send-btn, .audio-btn, .upload-btn {
+      background: var(--primary-color);
+      color: var(--light);
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .send-btn:hover, .audio-btn:hover, .upload-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .send-btn:active, .audio-btn:active, .upload-btn:active {
+      transform: scale(0.95);
+    }
+
+    .audio-btn.recording {
+      background: var(--recording-color);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+    }
+
+    .recording-timer {
+      display: none;
+      align-items: center;
+      margin-right: 8px;
+      font-size: 14px;
+      color: var(--recording-color);
+      font-weight: bold;
+    }
+
+    .recording-timer i {
+      margin-right: 5px;
+    }
+
+    .pre-chat {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 20px;
+      backdrop-filter: blur(3px);
+    }
+
+    .pre-chat-form {
+      background: var(--light);
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      animation: popIn 0.4s ease;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .pre-chat-form h2 {
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      font-size: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .pre-chat-form input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.3s;
+    }
+
+    .pre-chat-form input:focus {
+      border-color: var(--primary-color);
+      outline: none;
+    }
+
+    .pre-chat-form button {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary-color);
+      border: none;
+      border-radius: 8px;
+      color: var(--light);
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: background 0.3s;
+    }
+
+    .pre-chat-form button:hover {
+      background: var(--primary-dark);
+    }
+
+    .error-message {
+      color: var(--error-color);
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .input-error {
+      border-color: var(--error-color) !important;
+    }
+
+    .typing-indicator {
+      display: flex;
+      padding: 10px 15px;
+      background: rgba(248, 248, 248, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      border-bottom-left-radius: 0;
+      margin-bottom: 15px;
+      width: fit-content;
+      backdrop-filter: blur(2px);
+    }
+
+    .typing-indicator span {
+      height: 8px;
+      width: 8px;
+      background: var(--text-color);
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 2px;
+      opacity: 0.4;
+    }
+
+    .typing-indicator span:nth-child(1) {
+      animation: typing 1s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation: typing 1s infinite 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation: typing 1s infinite 0.4s;
+    }
+
+    @keyframes typing {
+      0% { opacity: 0.4; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(-3px); }
+      100% { opacity: 0.4; transform: translateY(0); }
+    }
+
+    .audio-message {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      margin-top: 5px;
+    }
+    
+    .audio-message i {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+    
+    .audio-player {
+      flex: 1;
+      height: 30px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .audio-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--primary-color);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    
+    .audio-controls {
+      display: flex;
+      align-items: center;
+      margin-left: 10px;
+    }
+    
+    .audio-controls button {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .chat-wrapper {
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
       }
-    </script>
-    <style>
-      .dark body {
-        background-color: #1a202c;
-        color: white;
+      
+      .chat-header {
+        padding: 12px 15px;
       }
-      .dark input, .dark button, .dark textarea {
-        background-color: #2d3748;
-        color: white;
+      
+      .chat-header img {
+        height: 35px;
       }
-    </style>
-  </head>
-  <body class="flex flex-col items-center justify-center min-h-screen p-4">
-    <div class="flex justify-end w-full mb-4">
-      <button onclick="toggleTheme()" class="px-4 py-2 bg-gray-800 text-white rounded">Modo Claro/Escuro</button>
+      
+      .chat-header h2 {
+        font-size: 16px;
+      }
+      
+      .messages {
+        padding: 15px;
+      }
+      
+      .message {
+        max-width: 85%;
+        font-size: 14px;
+        padding: 10px 12px;
+      }
+      
+      .pre-chat-form {
+        padding: 20px;
+      }
+      
+      .pre-chat-form h2 {
+        font-size: 20px;
+      }
+      
+      .chat-input textarea {
+        padding: 10px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="pre-chat" id="pre-chat">
+  <form class="pre-chat-form" id="pre-chat-form" novalidate>
+    <h2>Identificação do colaborador</h2>
+    
+    <div class="form-group">
+      <label for="nome">Nome completo</label>
+      <input type="text" id="nome" placeholder="Digite seu nome completo" required>
+      <div class="error-message" id="nome-error">Por favor, insira seu nome completo</div>
     </div>
-    <h1 class="text-3xl font-bold mb-6">Chatbot Suporte</h1>
-
-    <form id="startForm" class="flex flex-col space-y-4 w-full max-w-md">
-      <input class="border p-2 rounded" type="text" placeholder="Seu Nome" id="nome" required />
-      <input class="border p-2 rounded" type="text" placeholder="Sua Filial" id="filial" required />
-      <input class="border p-2 rounded" type="text" placeholder="Seu Setor" id="setor" required />
-      <button class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600" type="submit">Iniciar Chat</button>
-    </form>
-
-    <div id="chatContainer" class="hidden flex flex-col w-full max-w-md space-y-4">
-      <div id="chatMessages" class="flex flex-col space-y-2 h-96 overflow-y-scroll p-2 border rounded bg-white dark:bg-gray-800"></div>
-      <div class="flex">
-        <input id="userMessage" class="flex-1 p-2 border rounded-l" type="text" placeholder="Digite sua mensagem..." />
-        <button onclick="sendMessage()" class="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600">Enviar</button>
-      </div>
-      <button onclick="endChat()" class="mt-2 bg-red-500 text-white p-2 rounded hover:bg-red-600">Finalizar Atendimento</button>
+    
+    <div class="form-group">
+      <label for="filial">Filial</label>
+      <input type="text" id="filial" placeholder="Digite sua filial" required>
+      <div class="error-message" id="filial-error">Por favor, insira sua filial</div>
     </div>
+    
+    <div class="form-group">
+      <label for="setor">Setor</label>
+      <input type="text" id="setor" placeholder="Digite seu setor" required>
+      <div class="error-message" id="setor-error">Por favor, insira seu setor</div>
+    </div>
+    
+    <button type="submit">Iniciar Atendimento</button>
+  </form>
+</div>
 
-    <script>
-      const webhookUrl = "https://kochti.app.n8n.cloud/webhook-test/chat-atendimento";
+<div class="chat-wrapper" id="chat-wrapper" style="display:none;">
+  <div class="chat-header">
+    <img src="https://www.superkoch.com.br/media/wysiwyg/institutional/home/kochbrands.png" alt="Logo Koch Supermercados">
+    <h2>Atendimento Automático Suporte TI</h2>
+    <div class="status">Online</div>
+  </div>
 
-      let userInfo = {};
+  <div class="messages" id="messages"></div>
 
-      document.getElementById('startForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        userInfo = {
-          nome: document.getElementById('nome').value,
-          filial: document.getElementById('filial').value,
-          setor: document.getElementById('setor').value,
-        };
-        document.getElementById('startForm').classList.add('hidden');
-        document.getElementById('chatContainer').classList.remove('hidden');
-        addMessage('Olá ' + userInfo.nome + '! Como posso ajudar?', 'bot');
+  <div class="chat-input">
+    <textarea id="messageInput" rows="1" placeholder="Digite sua mensagem..." aria-label="Digite sua mensagem"></textarea>
+    <button class="upload-btn" id="uploadBtn" aria-label="Enviar arquivo"><i class="fas fa-paperclip"></i></button>
+    <div class="recording-timer" id="recordingTimer">
+      <i class="fas fa-circle"></i>
+      <span id="timerDisplay">00:00</span>
+    </div>
+    <button class="audio-btn" id="audioBtn" aria-label="Gravar áudio"><i class="fas fa-microphone"></i></button>
+    <button class="send-btn" id="sendBtn" aria-label="Enviar mensagem"><i class="fas fa-paper-plane"></i></button>
+  </div>
+  <input type="file" id="fileInput" style="display:none;" accept="image/*, .pdf, .doc, .docx, .xls, .xlsx">
+</div>
+
+<script>
+  // Elementos DOM
+  const preChat = document.getElementById('pre-chat');
+  const preChatForm = document.getElementById('pre-chat-form');
+  const chatWrapper = document.getElementById('chat-wrapper');
+  const messages = document.getElementById('messages');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const audioBtn = document.getElementById('audioBtn');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const fileInput = document.getElementById('fileInput');
+  const recordingTimer = document.getElementById('recordingTimer');
+  const timerDisplay = document.getElementById('timerDisplay');
+  
+  // Elementos de erro
+  const nomeError = document.getElementById('nome-error');
+  const filialError = document.getElementById('filial-error');
+  const setorError = document.getElementById('setor-error');
+  
+  // Variáveis de estado
+  let user = {};
+  let mediaRecorder, audioChunks = [];
+  let isRecording = false;
+  let isTyping = false;
+  let recordingInterval;
+  let recordingSeconds = 0;
+  const N8N_WEBHOOK_URL = 'https://kochti.app.n8n.cloud/webhook-test/chat-atendimento';
+  
+  // Solicitar permissões ao carregar
+  document.addEventListener('DOMContentLoaded', () => {
+    requestPermissions();
+    setupEventListeners();
+    autoResizeTextarea();
+  });
+  
+  // Configurar listeners de eventos
+  function setupEventListeners() {
+    preChatForm.addEventListener('submit', handlePreChatSubmit);
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', handleTextareaKeydown);
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileUpload);
+    audioBtn.addEventListener('click', toggleAudioRecording);
+    
+    // Validação em tempo real do formulário
+    document.getElementById('nome').addEventListener('input', validateField);
+    document.getElementById('filial').addEventListener('input', validateField);
+    document.getElementById('setor').addEventListener('input', validateField);
+  }
+  
+  // Solicitar permissões
+  async function requestPermissions() {
+    try {
+      if (navigator.permissions) {
+        await navigator.permissions.query({ name: 'microphone' });
+        await navigator.permissions.query({ name: 'camera' });
+      }
+    } catch (error) {
+      console.log("API de permissões não suportada");
+    }
+  }
+  
+  // Validação de campos do formulário
+  function validateField(e) {
+    const field = e.target;
+    const errorElement = document.getElementById(`${field.id}-error`);
+    
+    if (!field.value.trim()) {
+      field.classList.add('input-error');
+      errorElement.style.display = 'block';
+    } else {
+      field.classList.remove('input-error');
+      errorElement.style.display = 'none';
+    }
+  }
+  
+  // Manipulador de envio do formulário pré-chat
+  function handlePreChatSubmit(e) {
+    e.preventDefault();
+    
+    // Validar campos
+    const nome = document.getElementById('nome');
+    const filial = document.getElementById('filial');
+    const setor = document.getElementById('setor');
+    
+    let isValid = true;
+    
+    if (!nome.value.trim()) {
+      nome.classList.add('input-error');
+      nomeError.style.display = 'block';
+      isValid = false;
+    }
+    
+    if (!filial.value.trim()) {
+      filial.classList.add('input-error');
+      filialError.style.display = 'block';
+      isValid = false;
+    }
+    
+    if (!setor.value.trim()) {
+      setor.classList.add('input-error');
+      setorError.style.display = 'block';
+      isValid = false;
+    }
+    
+    if (!isValid) return;
+    
+    // Salvar dados do usuário
+    user = {
+      nome: nome.value.trim(),
+      filial: filial.value.trim(),
+      setor: setor.value.trim(),
+      startTime: new Date().toISOString()
+    };
+    
+    // Iniciar chat
+    preChat.style.display = 'none';
+    chatWrapper.style.display = 'flex';
+    sendWelcomeMessage();
+    
+    // Registrar início do chat
+    sendToN8N('Início do atendimento', true);
+  }
+  
+  // Manipulador de teclas no textarea
+  function handleTextareaKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+  
+  // Auto-ajustar altura do textarea
+  function autoResizeTextarea() {
+    messageInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+  }
+  
+  // Manipulador de upload de arquivo
+  function handleFileUpload() {
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    // Verificar tamanho do arquivo (limite de 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      addMessage('O arquivo é muito grande (máximo 5MB).', 'received');
+      return;
+    }
+    
+    const fileName = file.name.length > 20 
+      ? file.name.substring(0, 17) + '...' 
+      : file.name;
+    
+    addMessage('', 'sent', 'file', fileName);
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('nome', user.nome);
+    formData.append('filial', user.filial);
+    formData.append('setor', user.setor);
+    
+    showTypingIndicator();
+    
+    fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Erro na resposta');
+      return res.json();
+    })
+    .then(data => {
+      hideTypingIndicator();
+      addMessage(data.resposta || 'Arquivo recebido com sucesso.', 'received');
+    })
+    .catch(error => {
+      hideTypingIndicator();
+      addMessage('Erro ao enviar arquivo. Por favor, tente novamente.', 'received');
+      console.error('Erro:', error);
+    });
+    
+    // Resetar input de arquivo
+    fileInput.value = '';
+  }
+  
+  // Atualizar o timer de gravação
+  function updateTimer() {
+    recordingSeconds++;
+    const minutes = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
+    const seconds = (recordingSeconds % 60).toString().padStart(2, '0');
+    timerDisplay.textContent = `${minutes}:${seconds}`;
+  }
+  
+  // Alternar gravação de áudio
+  async function toggleAudioRecording() {
+    if (isRecording) {
+      stopAudioRecording();
+      audioBtn.classList.remove('recording');
+      audioBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+      recordingTimer.style.display = 'none';
+      clearInterval(recordingInterval);
+      recordingSeconds = 0;
+    } else {
+      try {
+        await startAudioRecording();
+        audioBtn.classList.add('recording');
+        audioBtn.innerHTML = '<i class="fas fa-stop"></i>';
+        recordingTimer.style.display = 'flex';
+        recordingInterval = setInterval(updateTimer, 1000);
+      } catch (error) {
+        addMessage('Erro ao acessar o microfone. Por favor, verifique as permissões.', 'received');
+        console.error('Erro na gravação:', error);
+      }
+    }
+    
+    isRecording = !isRecording;
+  }
+  
+  // Iniciar gravação de áudio
+  async function startAudioRecording() {
+    audioChunks = [];
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    
+    mediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) {
+        audioChunks.push(e.data);
+      }
+    };
+    
+    mediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      
+      // Mostrar mensagem de áudio enviado
+      addMessage('', 'sent', 'audio', 'Áudio enviado');
+      
+      showTypingIndicator();
+      
+      // Enviar áudio para o servidor
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.webm');
+      formData.append('nome', user.nome);
+      formData.append('filial', user.filial);
+      formData.append('setor', user.setor);
+      
+      try {
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) throw new Error('Erro na resposta');
+        
+        const data = await response.json();
+        hideTypingIndicator();
+        addMessage(data.resposta || 'Áudio recebido com sucesso.', 'received');
+      } catch (error) {
+        hideTypingIndicator();
+        addMessage('Erro ao enviar áudio. Por favor, tente novamente.', 'received');
+        console.error('Erro:', error);
+      }
+      
+      // Parar todas as trilhas de mídia
+      stream.getTracks().forEach(track => track.stop());
+    };
+    
+    mediaRecorder.start();
+  }
+  
+  // Parar gravação de áudio
+  function stopAudioRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+  }
+  
+  // Mostrar indicador de digitação
+  function showTypingIndicator() {
+    if (isTyping) return;
+    
+    isTyping = true;
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'typing-indicator';
+    typingDiv.id = 'typing-indicator';
+    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+    messages.appendChild(typingDiv);
+    messages.scrollTop = messages.scrollHeight;
+  }
+  
+  // Esconder indicador de digitação
+  function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+      typingIndicator.remove();
+    }
+    isTyping = false;
+  }
+  
+  // Enviar mensagem de boas-vindas
+  function sendWelcomeMessage() {
+    setTimeout(() => {
+      addMessage(`Olá ${user.nome}! Sou o assistente virtual do Suporte TI. No que posso ajudar você hoje?`, 'received');
+    }, 500);
+  }
+  
+  // Enviar mensagem do usuário
+  function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
+    
+    addMessage(text, 'sent');
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    
+    showTypingIndicator();
+    sendToN8N(text);
+  }
+  
+  // Adicionar mensagem ao chat
+  function addMessage(content, type, contentType = 'text', extraContent = '') {
+    const msg = document.createElement('div');
+    msg.classList.add('message', type);
+    
+    if (contentType === 'text') {
+      msg.textContent = content;
+    } else if (contentType === 'file') {
+      msg.innerHTML = `
+        <div>${content || 'Arquivo enviado'}</div>
+        <div class="audio-message">
+          <i class="fas fa-file"></i>
+          <span>${extraContent}</span>
+        </div>
+      `;
+    } else if (contentType === 'audio') {
+      msg.innerHTML = `
+        <div>${content || 'Áudio enviado'}</div>
+        <div class="audio-message">
+          <i class="fas fa-microphone"></i>
+          <div class="audio-player">
+            <div class="audio-progress" id="audioProgress"></div>
+          </div>
+          <div class="audio-controls">
+            <button aria-label="Reproduzir áudio"><i class="fas fa-play"></i></button>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Adicionar hora
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeElement = document.createElement('span');
+    timeElement.className = 'message-time';
+    timeElement.textContent = timeString;
+    msg.appendChild(timeElement);
+    
+    messages.appendChild(msg);
+    messages.scrollTop = messages.scrollHeight;
+  }
+  
+  // Enviar mensagem para o n8n
+  async function sendToN8N(userMessage, isSystemMessage = false) {
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: user.nome,
+          filial: user.filial,
+          setor: user.setor,
+          mensagem: userMessage,
+          isSystemMessage: isSystemMessage,
+          timestamp: new Date().toISOString()
+        })
       });
-
-      function addMessage(text, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = sender === 'user' ? 'text-right' : 'text-left';
-        messageDiv.innerHTML = `<span class="inline-block px-4 py-2 rounded ${sender === 'user' ? 'bg-blue-200' : 'bg-gray-300 dark:bg-gray-700'}">${text}</span>`;
-        document.getElementById('chatMessages').appendChild(messageDiv);
-        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+      
+      if (!response.ok) throw new Error('Erro na resposta');
+      
+      const data = await response.json();
+      hideTypingIndicator();
+      
+      if (data.resposta) {
+        addMessage(data.resposta, 'received');
+      } else if (!isSystemMessage) {
+        addMessage('Recebi sua mensagem. Em breve retornarei com mais informações.', 'received');
       }
+    } catch (error) {
+      hideTypingIndicator();
+      addMessage('Desculpe, estou tendo problemas para me conectar. Por favor, tente novamente mais tarde.', 'received');
+      console.error('Erro na comunicação:', error);
+    }
+  }
+  
+  // Fechar chat se o usuário tentar sair
+  window.addEventListener('beforeunload', (e) => {
+    if (chatWrapper.style.display !== 'none') {
+      sendToN8N('Usuário saiu do chat', true);
+    }
+  });
+</script>
 
-      async function sendMessage() {
-        const input = document.getElementById('userMessage');
-        const message = input.value.trim();
-        if (!message) return;
-        addMessage(message, 'user');
-        input.value = '';
-
-        const payload = {
-          userInfo,
-          message
-        };
-
-        try {
-          const res = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          addMessage(data.reply || 'Não entendi, você pode reformular?', 'bot');
-        } catch (error) {
-          addMessage('Erro ao conectar com o servidor.', 'bot');
-        }
-      }
-
-      function endChat() {
-        if (confirm('Tem certeza que deseja finalizar o atendimento?')) {
-          document.getElementById('chatMessages').innerHTML = '';
-          document.getElementById('chatContainer').classList.add('hidden');
-          document.getElementById('startForm').classList.remove('hidden');
-        }
-      }
-    </script>
-  </body>
+</body>
 </html>
